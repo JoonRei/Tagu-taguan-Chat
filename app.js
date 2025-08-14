@@ -91,9 +91,11 @@ function createMessageElement(msgId, text, senderIsMe, reaction = null){
   const bubble = document.createElement("div");
   bubble.className = "msg-bubble " + (senderIsMe ? "me" : "them");
   bubble.innerText = text;
-  bubble.style.userSelect = "none"; 
+  bubble.style.userSelect = "none";
   bubble.style.wordBreak = "break-word";
   bubble.style.whiteSpace = "pre-wrap";
+  bubble.style.display = "inline-block";
+  bubble.style.maxWidth = "100%";
 
   const badge = document.createElement("div");
   badge.className = "bg-white rounded-full shadow px-2 py-0.5 text-sm absolute left-1/2 -translate-x-1/2 -bottom-5";
@@ -106,6 +108,7 @@ function createMessageElement(msgId, text, senderIsMe, reaction = null){
   chatMessages.appendChild(wrapper);
   scrollToBottom();
 
+  // Long press for reactions
   let pressTimer;
   const startPress = (e) => {
     e.preventDefault();
@@ -120,6 +123,7 @@ function createMessageElement(msgId, text, senderIsMe, reaction = null){
   bubble.addEventListener("touchend", endPress);
 }
 
+/* Reaction popup overlay */
 function showReactionPopup(bubble, msgId, badgeEl){
   const existing = document.getElementById("reaction-popup");
   if(existing) existing.remove();
@@ -128,8 +132,18 @@ function showReactionPopup(bubble, msgId, badgeEl){
   const popup = document.createElement("div");
   popup.id = "reaction-popup";
   popup.className = "flex gap-2 bg-white rounded-full shadow p-2 z-[9999] fixed";
-  popup.style.top = rect.bottom + window.scrollY + 8 + "px";
-  popup.style.left = rect.left + window.scrollX + rect.width/2 + "px";
+
+  // Default position below bubble
+  let left = rect.left + rect.width/2;
+  let top = rect.bottom + window.scrollY + 8;
+
+  // Clamp to viewport width so it doesn't go off-screen
+  const popupWidth = 200; 
+  if(left - popupWidth/2 < 8) left = popupWidth/2 + 8;
+  if(left + popupWidth/2 > window.innerWidth - 8) left = window.innerWidth - popupWidth/2 - 8;
+
+  popup.style.left = left + "px";
+  popup.style.top = top + "px";
   popup.style.transform = "translateX(-50%)";
 
   const reactions = ["👍","❤️","😂","😮","😢","👏"];
