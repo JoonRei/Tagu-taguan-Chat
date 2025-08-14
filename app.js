@@ -132,6 +132,39 @@ function smallConfetti() {
   }
 }
 
+let pressTimer;
+let selectedMessageEl;
+
+document.addEventListener('mousedown', (e) => {
+  if (e.target.classList.contains('message-bubble')) {
+    selectedMessageEl = e.target;
+    pressTimer = setTimeout(() => {
+      showReactionPicker(e.pageX, e.pageY);
+    }, 500); // long press duration
+  }
+});
+
+document.addEventListener('mouseup', () => clearTimeout(pressTimer));
+
+function showReactionPicker(x, y) {
+  const picker = document.getElementById('reactionPicker');
+  picker.style.left = `${x}px`;
+  picker.style.top = `${y - 40}px`;
+  picker.classList.remove('hidden');
+}
+
+// Choose reaction
+document.querySelectorAll('.reactionOption').forEach(opt => {
+  opt.addEventListener('click', () => {
+    const reaction = document.createElement('div');
+    reaction.className = 'text-sm mt-1';
+    reaction.textContent = opt.textContent;
+    selectedMessageEl.appendChild(reaction);
+    document.getElementById('reactionPicker').classList.add('hidden');
+  });
+});
+
+
 /* ---------- Long Press Reaction Menu ---------- */
 function showReactionMenu(bubble) {
   const menu = document.createElement("div");
@@ -317,3 +350,4 @@ function stopIcebreakers() { if (icebreakerTimer) { clearInterval(icebreakerTime
 /* ---------- Init ---------- */
 showScreen(screenLogin);
 updateAvatar("ME");
+
