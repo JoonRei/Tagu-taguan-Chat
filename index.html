@@ -8,11 +8,8 @@
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
 
-  <!-- Google Font -->
+  <!-- Font -->
   <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;600&display=swap" rel="stylesheet">
-
-  <!-- Font Awesome Icons -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-yH6n1vM8Wq0t6zG6RmGd0pN0XCP9yyPp8jE4d4z2U5utQ2Qh9B7JpPYTzB2ZyNXY3Yw6cBmc6AqM5vN49nnjVA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 
   <link rel="stylesheet" href="style.css">
 </head>
@@ -88,13 +85,12 @@
       </div>
     </section>
 
-    <!-- Reactions Popup (Messenger style) -->
-    <div id="reactionPopup" class="hidden absolute bg-white shadow-lg rounded-full px-3 py-2 flex gap-3 border border-amber-100 z-50">
-      <button class="reactionBtn text-xl" data-reaction="❤️"><i class="fa-solid fa-heart text-red-500"></i></button>
-      <button class="reactionBtn text-xl" data-reaction="😂"><i class="fa-solid fa-face-laugh-squint text-yellow-500"></i></button>
-      <button class="reactionBtn text-xl" data-reaction="👍"><i class="fa-solid fa-thumbs-up text-blue-500"></i></button>
-      <button class="reactionBtn text-xl" data-reaction="🔥"><i class="fa-solid fa-fire text-orange-500"></i></button>
-      <button class="reactionBtn text-xl" data-reaction="😮"><i class="fa-solid fa-face-surprise text-yellow-400"></i></button>
+    <!-- Reactions Popup -->
+    <div id="reactionPopup" class="hidden fixed bottom-16 bg-white shadow-lg rounded-full px-4 py-2 flex gap-3 border border-amber-100">
+      <button class="reactionBtn text-2xl">❤️</button>
+      <button class="reactionBtn text-2xl">😂</button>
+      <button class="reactionBtn text-2xl">👍</button>
+      <button class="reactionBtn text-2xl">🔥</button>
     </div>
 
   </main>
