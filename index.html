@@ -1,151 +1,59 @@
-<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Tagu-Taguan Chat</title>
+body { margin: 0; }
 
-  <!-- Tailwind CSS -->
-  <script src="https://cdn.tailwindcss.com"></script>
+/* Message bubble */
+.msg-bubble {
+  max-width: 70%;
+  padding: 10px 14px;
+  border-radius: 20px;
+  line-height: 1.4;
+  font-size: 14px;
+  display: inline-block;
+  word-break: break-word;
+  white-space: normal; /* fix per-letter line break */
+  overflow-wrap: break-word;
+}
 
-  <!-- Font -->
-  <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;600&display=swap" rel="stylesheet">
+/* Sent message */
+.msg-bubble.me {
+  background-color: #ff8b3d; /* orange */
+  color: white;
+  border-bottom-right-radius: 4px;
+}
 
-  <style>
-    /* Chat bubble styling */
-    .msg-wrapper { 
-      position: relative; 
-      display: flex; 
-      flex-direction: column; 
-    }
-    .msg-bubble { 
-      max-width: 70%;
-      padding: 10px 14px; 
-      border-radius: 18px; 
-      line-height: 1.3; 
-      word-break: break-word; 
-      white-space: pre-wrap;  
-      user-select: none; 
-    }
-    .msg-bubble.me { 
-      background: #ff8b3d; 
-      color: white; 
-      border-bottom-right-radius: 4px; 
-      align-self: flex-end; 
-    }
-    .msg-bubble.them { 
-      background: #e4e6eb; 
-      color: black; 
-      border-bottom-left-radius: 4px; 
-      align-self: flex-start; 
-    }
-    .reaction-badge { 
-      font-size: 0.9rem; 
-      padding: 2px 6px; 
-      background: #f1f0f0; 
-      border-radius: 12px; 
-      display: inline-block; 
-      margin-top: 2px; 
-      align-self: flex-start;
-    }
-    #reactionPopup {
-      position: absolute; 
-      z-index: 50;
-    }
-    .floaty {
-      position: absolute;
-      font-size: 24px;
-      animation: floatyAnim 0.9s forwards;
-      pointer-events: none;
-    }
-    @keyframes floatyAnim {
-      0% { transform: translateY(0); opacity: 1; }
-      100% { transform: translateY(-30px); opacity: 0; }
-    }
-  </style>
-</head>
-<body class="bg-gradient-to-b from-[#fff9f0] to-[#fff3df] min-h-screen font-quicksand text-slate-800">
+/* Received message */
+.msg-bubble.them {
+  background-color: #e5e5ea; /* light gray / Messenger style */
+  color: black;
+  border-bottom-left-radius: 4px;
+}
 
-  <main class="max-w-3xl mx-auto p-4">
-    <!-- Header -->
-    <header class="flex items-center justify-between mb-4">
-      <div class="flex items-center gap-3">
-        <div class="text-2xl">🏠</div>
-        <div>
-          <h1 class="text-xl sm:text-2xl font-semibold text-[#ff8b3d]">Tagu-Taguan Chat</h1>
-          <div class="text-xs text-slate-500">Tambay-style hide & seek 1-on-1 chat</div>
-        </div>
-      </div>
-      <div id="meAvatar" class="w-9 h-9 rounded-full bg-[#fde9d3] flex items-center justify-center text-sm font-semibold text-[#9b4b00]">ME</div>
-    </header>
+/* Wrapper for message + reactions */
+.msg-wrapper {
+  display: flex;
+  flex-direction: column;
+}
 
-    <!-- LOGIN -->
-    <section id="screenLogin" class="bg-white/90 border border-amber-100 rounded-lg shadow p-4">
-      <p class="mb-3 text-sm text-slate-600">Enter a nickname (hidden for the first 5 minutes)</p>
-      <div class="flex gap-2">
-        <input id="inpName" class="flex-1 rounded-lg border border-amber-200 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#ffd6a8]" placeholder="e.g. KantoKid" />
-        <button id="btnJoin" class="rounded-lg bg-[#ff8b3d] text-white px-4 py-2 hover:bg-[#ff7a1e] transition">Start</button>
-      </div>
-    </section>
+.msg-wrapper.me { align-items: flex-end; }
+.msg-wrapper.them { align-items: flex-start; }
 
-    <!-- WAITING -->
-    <section id="screenWaiting" class="hidden bg-white/90 border border-amber-100 rounded-lg shadow p-4 mt-4">
-      <div class="flex items-center gap-4">
-        <div class="text-4xl animate-bounce">🛺</div>
-        <div>
-          <div class="font-semibold text-[#ff8b3d]">Nagtatago ang kalaban…</div>
-          <div id="searchStatus" class="text-sm text-slate-500 mt-1">Searching...</div>
-        </div>
-      </div>
+/* Reaction badge */
+.reaction-badge {
+  margin-top: 4px;
+  font-size: 16px;
+  background-color: white;
+  padding: 2px 6px;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+  display: inline-block;
+}
 
-      <div class="mt-4 p-3 rounded-md bg-amber-50">
-        <div class="text-xs text-amber-800 uppercase mb-1">Icebreaker</div>
-        <div id="icebreaker" class="font-medium text-slate-800">Ano’ng paborito mong merienda?</div>
-      </div>
+/* Scrollable messages */
+#chatMessages {
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  padding: 12px;
+}
 
-      <div class="mt-4 flex justify-between items-center">
-        <div class="text-xs text-slate-500">Hintayin mo lang — may makaka-chat ka rin.</div>
-        <button id="btnCancel" class="text-sm text-[#ff8b3d] hover:underline">Cancel</button>
-      </div>
-    </section>
-
-    <!-- CHAT -->
-    <section id="screenChat" class="hidden bg-white/90 border border-amber-100 rounded-lg shadow mt-4 flex flex-col overflow-hidden relative">
-      <!-- Top -->
-      <div class="p-3 bg-gradient-to-r from-[#ff8b3d] to-[#ffd07a] text-white flex items-center justify-between">
-        <div>
-          <div class="text-xs uppercase opacity-90">Ka-chat</div>
-          <div id="lblPartner" class="font-semibold text-lg animate-pulse">??? (nagtatago…)</div>
-          <div id="lblReveal" class="text-xs opacity-80">Reveals in 5:00</div>
-        </div>
-        <div class="flex gap-2">
-          <button id="btnEnd" class="bg-white/20 hover:bg-white/30 rounded px-3 py-1 text-sm">End</button>
-          <button id="btnRematch" class="bg-white text-[#ff8b3d] px-3 py-1 rounded text-sm">Lipat Kanto</button>
-        </div>
-      </div>
-
-      <!-- Messages -->
-      <div id="chatMessages" class="flex-1 overflow-y-auto p-4 space-y-3 bg-[length:20px_20px] relative">
-        <!-- messages go here -->
-      </div>
-
-      <!-- Composer -->
-      <div class="p-3 flex gap-2 items-center border-t border-amber-100 bg-white">
-        <input id="inpMsg" class="flex-1 rounded-full border border-amber-200 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#ffd6a8]" placeholder="Type a message…" />
-        <button id="btnSend" class="rounded-full bg-[#ff8b3d] text-white px-4 py-2">📩</button>
-      </div>
-
-      <!-- Reactions Popup -->
-      <div id="reactionPopup" class="hidden bg-white shadow-lg rounded-full px-4 py-2 flex gap-3 border border-amber-100">
-        <button class="reactionBtn text-2xl">❤️</button>
-        <button class="reactionBtn text-2xl">😂</button>
-        <button class="reactionBtn text-2xl">👍</button>
-        <button class="reactionBtn text-2xl">🔥</button>
-      </div>
-
-    </section>
-  </main>
-
-  <script type="module" src="app.js"></script>
-</body>
-</html>
+/* Disable text selection on long press */
+.msg-bubble { user-select: none; }
