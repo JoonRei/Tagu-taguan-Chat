@@ -74,13 +74,50 @@ function scrollToBottom() { chatMessages.scrollTop = chatMessages.scrollHeight; 
 function addBubble(text, senderIsMe = false) {
   const wrapper = document.createElement("div");
   wrapper.className = senderIsMe ? "flex justify-end" : "flex justify-start";
+
   const bubble = document.createElement("div");
   bubble.className = "msg-bubble " + (senderIsMe ? "me" : "them");
   bubble.innerText = text;
+
+  // Prevent default long-press text selection
+  bubble.style.userSelect = "none";
+  bubble.style.webkitUserSelect = "none";
+  bubble.style.msUserSelect = "none";
+
+  // Long press detection
+  let pressTimer;
+  bubble.addEventListener("touchstart", function () {
+    pressTimer = setTimeout(() => {
+      showReactionPicker(bubble); // your custom function to pick emoji
+    }, 500); // 0.5s hold
+  });
+  bubble.addEventListener("touchend", function () {
+    clearTimeout(pressTimer);
+  });
+
   wrapper.appendChild(bubble);
   chatMessages.appendChild(wrapper);
   scrollToBottom();
 }
+
+// Example reaction picker
+function showReactionPicker(bubble) {
+  const picker = document.createElement("div");
+  picker.className = "absolute bg-white shadow p-1 rounded flex space-x-2";
+  picker.style.position = "absolute";
+  picker.style.bottom = "30px";
+  picker.innerHTML = "👍 ❤️ 😂 😮 😢";
+  picker.querySelectorAll("span").forEach(emojiEl => {
+    emojiEl.style.cursor = "pointer";
+    emojiEl.addEventListener("click", () => {
+      push(ref(db, `rooms/${roomId}/messages`), { type: "reaction", emoji: emojiEl.textContent, ts: Date.now()});
+      spawnFloaty(emojiEl.textContent);
+      picker.remove();
+    });
+  });
+  bubble.appendChild(picker);
+}
+
 function addSystem(text) {
   const el = document.createElement("div");
   el.className = "text-center text-xs text-slate-500";
@@ -310,3 +347,4 @@ function stopIcebreakers(){ if (icebreakerTimer) { clearInterval(icebreakerTimer
 /* ---------- Init ---------- */
 showScreen(screenLogin);
 updateAvatar("ME");
+
