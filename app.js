@@ -1,6 +1,6 @@
 // app.js - vanilla JS + Firebase Realtime Database
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import { getDatabase, ref, push, set, onChildAdded, get, remove, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+import { getDatabase, ref, push, set, onChildAdded, get, remove, onValue, update } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
 /* -------------------------
    YOUR FIREBASE CONFIG
@@ -38,7 +38,6 @@ const inpMsg = document.getElementById("inpMsg");
 const btnSend = document.getElementById("btnSend");
 const btnEnd = document.getElementById("btnEnd");
 const btnRematch = document.getElementById("btnRematch");
-const reactionBtns = Array.from(document.querySelectorAll(".reactionBtn"));
 
 /* ---------- State ---------- */
 let nickname = "";
@@ -50,6 +49,8 @@ let searchingTimer = null;
 let icebreakerTimer = null;
 let revealTimer = null;
 let revealCountdown = null;
+let reactionPickerEl = null;
+let longPressTimer = null;
 
 /* ---------- Icebreakers ---------- */
 const icebreakers = [
@@ -71,51 +72,33 @@ function updateAvatar(name) {
 }
 function scrollToBottom() { chatMessages.scrollTop = chatMessages.scrollHeight; }
 
-function addBubble(text, senderIsMe = false) {
+function addBubble(messageObj, key) {
+  const senderIsMe = messageObj.sender === nickname;
   const wrapper = document.createElement("div");
   wrapper.className = senderIsMe ? "flex justify-end" : "flex justify-start";
-
+  
   const bubble = document.createElement("div");
   bubble.className = "msg-bubble " + (senderIsMe ? "me" : "them");
-  bubble.innerText = text;
+  bubble.innerText = messageObj.text;
+  bubble.dataset.id = key;
 
-  // Prevent default long-press text selection
-  bubble.style.userSelect = "none";
-  bubble.style.webkitUserSelect = "none";
-  bubble.style.msUserSelect = "none";
+  // reaction badge
+  const reactionBadge = document.createElement("div");
+  reactionBadge.className = "reaction-badge text-sm mt-1 text-center";
+  if (messageObj.reaction) {
+    reactionBadge.textContent = messageObj.reaction;
+  }
 
-  // Long press detection
-  let pressTimer;
-  bubble.addEventListener("touchstart", function () {
-    pressTimer = setTimeout(() => {
-      showReactionPicker(bubble); // your custom function to pick emoji
-    }, 500); // 0.5s hold
-  });
-  bubble.addEventListener("touchend", function () {
-    clearTimeout(pressTimer);
-  });
+  const container = document.createElement("div");
+  container.className = "flex flex-col";
+  container.appendChild(bubble);
+  container.appendChild(reactionBadge);
 
-  wrapper.appendChild(bubble);
+  wrapper.appendChild(container);
   chatMessages.appendChild(wrapper);
   scrollToBottom();
-}
 
-// Example reaction picker
-function showReactionPicker(bubble) {
-  const picker = document.createElement("div");
-  picker.className = "absolute bg-white shadow p-1 rounded flex space-x-2";
-  picker.style.position = "absolute";
-  picker.style.bottom = "30px";
-  picker.innerHTML = "👍 ❤️ 😂 😮 😢";
-  picker.querySelectorAll("span").forEach(emojiEl => {
-    emojiEl.style.cursor = "pointer";
-    emojiEl.addEventListener("click", () => {
-      push(ref(db, `rooms/${roomId}/messages`), { type: "reaction", emoji: emojiEl.textContent, ts: Date.now()});
-      spawnFloaty(emojiEl.textContent);
-      picker.remove();
-    });
-  });
-  bubble.appendChild(picker);
+  setupLongPress(bubble, key);
 }
 
 function addSystem(text) {
@@ -158,6 +141,45 @@ function smallConfetti() {
     }, 10);
     setTimeout(()=> p.remove(), 1100);
   }
+}
+
+/* ---------- Long Press Reaction Picker ---------- */
+function setupLongPress(bubbleEl, msgId) {
+  const startPress = (e) => {
+    e.preventDefault();
+    longPressTimer = setTimeout(() => {
+      showReactionPicker(bubbleEl, msgId);
+    }, 500);
+  };
+  const endPress = () => clearTimeout(longPressTimer);
+
+  bubbleEl.addEventListener("touchstart", startPress);
+  bubbleEl.addEventListener("touchend", endPress);
+  bubbleEl.addEventListener("mousedown", startPress);
+  bubbleEl.addEventListener("mouseup", endPress);
+}
+
+function showReactionPicker(targetBubble, msgId) {
+  if (reactionPickerEl) reactionPickerEl.remove();
+
+  reactionPickerEl = document.createElement("div");
+  reactionPickerEl.className = "reaction-picker flex gap-2 p-2 bg-white shadow-lg rounded-full text-lg";
+  const emojis = ["👍","❤️","😂","😮","😢","😡"];
+  emojis.forEach(e => {
+    const btn = document.createElement("button");
+    btn.textContent = e;
+    btn.onclick = () => {
+      update(ref(db, `rooms/${roomId}/messages/${msgId}`), { reaction: e });
+      reactionPickerEl.remove();
+    };
+    reactionPickerEl.appendChild(btn);
+  });
+
+  const rect = targetBubble.getBoundingClientRect();
+  reactionPickerEl.style.position = "absolute";
+  reactionPickerEl.style.left = rect.left + "px";
+  reactionPickerEl.style.top = (rect.bottom + window.scrollY) + "px";
+  document.body.appendChild(reactionPickerEl);
 }
 
 /* ---------- Matchmaking ---------- */
@@ -245,15 +267,11 @@ function startChat(id, partner) {
   messageWatcher = onChildAdded(msgsRef, (snap) => {
     const m = snap.val();
     if (!m) return;
-    if (m.type === "reaction") {
-      spawnFloaty(m.emoji || "👍");
-      return;
-    }
     if (m.type === "system") {
       addSystem(m.text);
       return;
     }
-    if (m.text) addBubble(m.text, m.sender === nickname);
+    if (m.text) addBubble(m, snap.key);
   });
 
   push(ref(db, `rooms/${roomId}/messages`), { type: "system", text: "🔔 bagong tambay session! Mag-hi ka na.", ts: Date.now() });
@@ -267,39 +285,6 @@ function startChat(id, partner) {
     inpName.value = nickname;
     btnJoin.click();
   };
-
-  // --- Long-press reactions ---
-  reactionBtns.forEach(btn => {
-    let pressTimer = null;
-    let repeatTimer = null;
-
-    function sendReaction() {
-      push(ref(db, `rooms/${roomId}/messages`), { type: "reaction", emoji: btn.textContent, ts: Date.now() });
-      spawnFloaty(btn.textContent);
-    }
-
-    const startPress = () => {
-      sendReaction(); // send immediately
-      pressTimer = setTimeout(() => {
-        repeatTimer = setInterval(sendReaction, 400); // keep sending while holding
-      }, 500); // long-press threshold
-    };
-
-    const endPress = () => {
-      clearTimeout(pressTimer);
-      clearInterval(repeatTimer);
-    };
-
-    // Mouse
-    btn.addEventListener("mousedown", startPress);
-    btn.addEventListener("mouseup", endPress);
-    btn.addEventListener("mouseleave", endPress);
-
-    // Touch
-    btn.addEventListener("touchstart", (e) => { e.preventDefault(); startPress(); }, { passive: false });
-    btn.addEventListener("touchend", endPress);
-    btn.addEventListener("touchcancel", endPress);
-  });
 }
 
 /* reveal countdown */
@@ -347,4 +332,3 @@ function stopIcebreakers(){ if (icebreakerTimer) { clearInterval(icebreakerTimer
 /* ---------- Init ---------- */
 showScreen(screenLogin);
 updateAvatar("ME");
-
