@@ -86,19 +86,16 @@ function createMessageElement(msgId, text, senderIsMe, reaction = null){
   wrapper.className = senderIsMe ? "flex justify-end mb-2" : "flex justify-start mb-2";
 
   const container = document.createElement("div");
-  container.className = "relative max-w-[75%]";
+  container.className = "relative";
 
   const bubble = document.createElement("div");
   bubble.className = "msg-bubble " + (senderIsMe ? "me" : "them");
   bubble.innerText = text;
-  bubble.style.userSelect = "none";
-  bubble.style.wordBreak = "break-word";
-  bubble.style.whiteSpace = "pre-wrap";
-  bubble.style.display = "inline-block";
-  bubble.style.maxWidth = "100%";
+  bubble.style.userSelect = "none"; // prevent text highlight
 
+  // Reaction badge
   const badge = document.createElement("div");
-  badge.className = "bg-white rounded-full shadow px-2 py-0.5 text-sm absolute left-1/2 -translate-x-1/2 -bottom-5";
+  badge.className = "bg-white rounded-full shadow px-1 text-lg absolute left-1/2 -translate-x-1/2 -bottom-5 z-10";
   badge.textContent = reaction || "";
   badge.style.display = reaction ? "block" : "none";
 
@@ -133,17 +130,14 @@ function showReactionPopup(bubble, msgId, badgeEl){
   popup.id = "reaction-popup";
   popup.className = "flex gap-2 bg-white rounded-full shadow p-2 z-[9999] fixed";
 
-  // Default position below bubble
+  // Adjust position to always stay inside viewport
+  const popupWidth = 240; // approximate width
   let left = rect.left + rect.width/2;
-  let top = rect.bottom + window.scrollY + 8;
+  if(left + popupWidth/2 > window.innerWidth) left = window.innerWidth - popupWidth/2 - 8;
+  if(left - popupWidth/2 < 0) left = popupWidth/2 + 8;
 
-  // Clamp to viewport width so it doesn't go off-screen
-  const popupWidth = 200; 
-  if(left - popupWidth/2 < 8) left = popupWidth/2 + 8;
-  if(left + popupWidth/2 > window.innerWidth - 8) left = window.innerWidth - popupWidth/2 - 8;
-
+  popup.style.top = rect.bottom + window.scrollY + 8 + "px";
   popup.style.left = left + "px";
-  popup.style.top = top + "px";
   popup.style.transform = "translateX(-50%)";
 
   const reactions = ["👍","❤️","😂","😮","😢","👏"];
