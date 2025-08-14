@@ -1,9 +1,9 @@
 // app.js - vanilla JS + Firebase Realtime Database
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import { getDatabase, ref, push, set, onChildAdded, get, remove, onValue, update } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+import { getDatabase, ref, push, set, onChildAdded, get, remove, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
 /* -------------------------
-   FIREBASE CONFIG
+   YOUR FIREBASE CONFIG
 --------------------------*/
 const firebaseConfig = {
   apiKey: "AIzaSyDS21eqU6yinc1Nr1DOZeUXMDOc6Q9IDqc",
@@ -38,6 +38,8 @@ const inpMsg = document.getElementById("inpMsg");
 const btnSend = document.getElementById("btnSend");
 const btnEnd = document.getElementById("btnEnd");
 const btnRematch = document.getElementById("btnRematch");
+const reactionBtns = Array.from(document.querySelectorAll(".reactionBtn"));
+const reactionPopup = document.getElementById("reactionPopup");
 
 /* ---------- State ---------- */
 let nickname = "";
@@ -49,8 +51,9 @@ let searchingTimer = null;
 let icebreakerTimer = null;
 let revealTimer = null;
 let revealCountdown = null;
-let reactionPopup = null;
+
 let longPressTimer = null;
+let currentBadge = null;
 
 /* ---------- Icebreakers ---------- */
 const icebreakers = [
@@ -61,49 +64,50 @@ const icebreakers = [
   "Favorite karaoke song? 🎤"
 ];
 
-/* helpers */
+/* ---------- Helpers ---------- */
 function showScreen(screen) {
   [screenLogin, screenWaiting, screenChat].forEach(s => s.classList.add("hidden"));
   screen.classList.remove("hidden");
 }
 function updateAvatar(name) {
-  const initials = (name || "ME").split(" ").map(s => s[0]).slice(0,2).join("").toUpperCase();
+  const initials = (name || "ME").split(" ").map(s => s[0]).slice(0, 2).join("").toUpperCase();
   meAvatar.textContent = initials;
 }
 function scrollToBottom() { chatMessages.scrollTop = chatMessages.scrollHeight; }
 
-function addBubble(msgId, text, senderIsMe = false, reaction = null) {
+/* -------- Updated addBubble with reaction badge -------- */
+function addBubble(text, senderIsMe = false) {
   const wrapper = document.createElement("div");
   wrapper.className = senderIsMe ? "flex justify-end" : "flex justify-start";
-  
-  const container = document.createElement("div");
-  container.className = "msg-container";
+
+  const msgContainer = document.createElement("div");
+  msgContainer.className = "relative max-w-[75%]";
 
   const bubble = document.createElement("div");
-  bubble.className = "msg-bubble " + (senderIsMe ? "me" : "them");
+  bubble.className =
+    "msg-bubble px-3 py-2 rounded-2xl cursor-pointer " +
+    (senderIsMe
+      ? "bg-[#ffecd1] text-[#9b4b00] rounded-br-none"
+      : "bg-white border border-amber-100 rounded-bl-none");
   bubble.innerText = text;
+  bubble.dataset.senderMe = senderIsMe;
 
-  // Add reaction badge if exists
-  const badge = document.createElement("div");
-  badge.className = "reaction-badge";
-  if (reaction) badge.textContent = reaction;
+  // Reaction badge under message
+  const reactionBadge = document.createElement("div");
+  reactionBadge.className =
+    "absolute left-1/2 -translate-x-1/2 translate-y-full mt-1 text-lg hidden";
+  reactionBadge.dataset.reactionBadge = "true";
 
-  container.appendChild(bubble);
-  container.appendChild(badge);
-  wrapper.appendChild(container);
+  msgContainer.appendChild(bubble);
+  msgContainer.appendChild(reactionBadge);
+  wrapper.appendChild(msgContainer);
   chatMessages.appendChild(wrapper);
-
-  // Long-press handler (only for partner's messages)
-  if (!senderIsMe) {
-    bubble.addEventListener("mousedown", (e) => startLongPress(e, msgId, bubble));
-    bubble.addEventListener("touchstart", (e) => startLongPress(e, msgId, bubble));
-    bubble.addEventListener("mouseup", cancelLongPress);
-    bubble.addEventListener("mouseleave", cancelLongPress);
-    bubble.addEventListener("touchend", cancelLongPress);
-  }
-
   scrollToBottom();
+
+  attachLongPress(bubble, reactionBadge);
 }
+
+/* System messages */
 function addSystem(text) {
   const el = document.createElement("div");
   el.className = "text-center text-xs text-slate-500";
@@ -112,7 +116,35 @@ function addSystem(text) {
   scrollToBottom();
 }
 
-/* Floaty reaction */
+/* Long press handler */
+function attachLongPress(bubbleEl, badgeEl) {
+  bubbleEl.addEventListener("touchstart", startPress);
+  bubbleEl.addEventListener("mousedown", startPress);
+  bubbleEl.addEventListener("touchend", cancelPress);
+  bubbleEl.addEventListener("mouseup", cancelPress);
+  bubbleEl.addEventListener("mouseleave", cancelPress);
+
+  function startPress(e) {
+    e.preventDefault();
+    longPressTimer = setTimeout(() => {
+      showReactionPopup(bubbleEl, badgeEl);
+    }, 500);
+  }
+  function cancelPress() {
+    clearTimeout(longPressTimer);
+  }
+}
+
+function showReactionPopup(bubbleEl, badgeEl) {
+  currentBadge = badgeEl;
+  const rect = bubbleEl.getBoundingClientRect();
+  reactionPopup.style.position = "absolute";
+  reactionPopup.style.left = rect.left + rect.width / 2 - reactionPopup.offsetWidth / 2 + "px";
+  reactionPopup.style.top = rect.bottom + 8 + "px";
+  reactionPopup.classList.remove("hidden");
+}
+
+/* ---------- Floaty animation ---------- */
 function spawnFloaty(emoji) {
   const el = document.createElement("div");
   el.className = "floaty";
@@ -124,67 +156,31 @@ function spawnFloaty(emoji) {
   setTimeout(() => el.remove(), 900);
 }
 
-/* Confetti */
+/* ---------- Confetti ---------- */
 function smallConfetti() {
-  for (let i=0;i<14;i++){
+  for (let i = 0; i < 14; i++) {
     const p = document.createElement("div");
     p.style.position = "absolute";
-    p.style.width = (4 + Math.random()*8)+"px";
-    p.style.height = (6 + Math.random()*8)+"px";
-    p.style.background = ["#fff","#ffd59f","#ffb265","#ffd8a8"][Math.floor(Math.random()*4)];
-    p.style.left = (30 + Math.random()*40) + "%";
+    p.style.width = (4 + Math.random() * 8) + "px";
+    p.style.height = (6 + Math.random() * 8) + "px";
+    p.style.background = ["#fff", "#ffd59f", "#ffb265", "#ffd8a8"][Math.floor(Math.random() * 4)];
+    p.style.left = (30 + Math.random() * 40) + "%";
     p.style.bottom = "6px";
     p.style.opacity = "1";
-    p.style.transform = `translateY(0) rotate(${Math.random()*360}deg)`;
+    p.style.transform = `translateY(0) rotate(${Math.random() * 360}deg)`;
     p.style.transition = "transform 900ms cubic-bezier(.2,.9,.2,1), opacity 900ms";
     document.body.appendChild(p);
-    setTimeout(()=> {
-      p.style.transform = `translateY(-140px) translateX(${(Math.random()*160-80)}px) rotate(${Math.random()*720}deg) scale(.9)`;
+    setTimeout(() => {
+      p.style.transform = `translateY(-140px) translateX(${(Math.random() * 160 - 80)}px) rotate(${Math.random() * 720}deg) scale(.9)`;
       p.style.opacity = 0;
     }, 10);
-    setTimeout(()=> p.remove(), 1100);
-  }
-}
-
-/* ---------- Long-press Reaction ---------- */
-function startLongPress(e, msgId, bubble) {
-  cancelLongPress();
-  longPressTimer = setTimeout(() => {
-    showReactionPopup(msgId, bubble);
-  }, 500);
-}
-function cancelLongPress() {
-  clearTimeout(longPressTimer);
-}
-function showReactionPopup(msgId, bubble) {
-  hideReactionPopup();
-  reactionPopup = document.createElement("div");
-  reactionPopup.className = "reaction-popup";
-  const emojis = ["👍","❤️","😂","😮","😢"];
-  emojis.forEach(emoji => {
-    const btn = document.createElement("button");
-    btn.textContent = emoji;
-    btn.onclick = () => {
-      update(ref(db, `rooms/${roomId}/messages/${msgId}`), { reaction: emoji });
-      hideReactionPopup();
-    };
-    reactionPopup.appendChild(btn);
-  });
-  const rect = bubble.getBoundingClientRect();
-  reactionPopup.style.top = rect.bottom + window.scrollY + "px";
-  reactionPopup.style.left = rect.left + window.scrollX + "px";
-  document.body.appendChild(reactionPopup);
-}
-function hideReactionPopup() {
-  if (reactionPopup) {
-    reactionPopup.remove();
-    reactionPopup = null;
+    setTimeout(() => p.remove(), 1100);
   }
 }
 
 /* ---------- Matchmaking ---------- */
 btnJoin.addEventListener("click", async () => {
-  nickname = (inpName.value || "").trim() || `Player${Math.floor(Math.random()*900)+100}`;
+  nickname = (inpName.value || "").trim() || `Player${Math.floor(Math.random() * 900) + 100}`;
   updateAvatar(nickname);
   showScreen(screenWaiting);
   startIcebreakers();
@@ -220,7 +216,7 @@ btnJoin.addEventListener("click", async () => {
 
     let dots = 0;
     searchingTimer = setInterval(() => {
-      dots = (dots+1) % 4;
+      dots = (dots + 1) % 4;
       searchStatus.textContent = "Searching" + ".".repeat(dots);
     }, 500);
 
@@ -232,7 +228,7 @@ btnJoin.addEventListener("click", async () => {
   }
 });
 
-function cleanupWaiting(){
+function cleanupWaiting() {
   if (partnerWatcher) { partnerWatcher(); partnerWatcher = null; }
   if (searchingTimer) { clearInterval(searchingTimer); searchingTimer = null; }
   stopIcebreakers();
@@ -255,7 +251,7 @@ function startChat(id, partner) {
   const fiveMin = 5 * 60 * 1000;
   startRevealCountdown(fiveMin);
   if (revealTimer) clearTimeout(revealTimer);
-  revealTimer = setTimeout(()=> {
+  revealTimer = setTimeout(() => {
     lblPartner.textContent = partnerName;
     lblPartner.classList.remove("pulsate");
     addSystem("🎉 Nagpakilala na siya!");
@@ -267,8 +263,15 @@ function startChat(id, partner) {
   messageWatcher = onChildAdded(msgsRef, (snap) => {
     const m = snap.val();
     if (!m) return;
-    if (m.type === "system") { addSystem(m.text); return; }
-    if (m.type === "text") { addBubble(snap.key, m.text, m.sender === nickname, m.reaction || null); }
+    if (m.type === "reaction") {
+      spawnFloaty(m.emoji || "👍");
+      return;
+    }
+    if (m.type === "system") {
+      addSystem(m.text);
+      return;
+    }
+    if (m.text) addBubble(m.text, m.sender === nickname);
   });
 
   push(ref(db, `rooms/${roomId}/messages`), { type: "system", text: "🔔 bagong tambay session! Mag-hi ka na.", ts: Date.now() });
@@ -282,30 +285,46 @@ function startChat(id, partner) {
     inpName.value = nickname;
     btnJoin.click();
   };
+
+  reactionBtns.forEach(btn => {
+    btn.onclick = () => {
+      if (currentBadge) {
+        currentBadge.textContent = btn.textContent;
+        currentBadge.classList.remove("hidden");
+      }
+      reactionPopup.classList.add("hidden");
+      push(ref(db, `rooms/${roomId}/messages`), {
+        type: "reaction",
+        emoji: btn.textContent,
+        ts: Date.now()
+      });
+      spawnFloaty(btn.textContent);
+    };
+  });
 }
 
-/* reveal countdown */
+/* ---------- Reveal countdown ---------- */
 function startRevealCountdown(ms) {
   const end = Date.now() + ms;
   if (revealCountdown) clearInterval(revealCountdown);
   revealCountdown = setInterval(() => {
-    const left = Math.max(0, Math.ceil((end - Date.now())/1000));
-    const mm = Math.floor(left/60);
+    const left = Math.max(0, Math.ceil((end - Date.now()) / 1000));
+    const mm = Math.floor(left / 60);
     const ss = left % 60;
-    lblReveal.textContent = `Reveals in ${mm}:${String(ss).padStart(2,"0")}`;
+    lblReveal.textContent = `Reveals in ${mm}:${String(ss).padStart(2, "0")}`;
     if (left <= 0) { clearInterval(revealCountdown); lblReveal.textContent = "Revealed"; }
   }, 1000);
 }
 
-/* send / end */
-function sendMessage(){
+/* ---------- Send / End ---------- */
+function sendMessage() {
   const t = (inpMsg.value || "").trim();
   if (!t || !roomId) return;
-  push(ref(db, `rooms/${roomId}/messages`), { type: "text", sender: nickname, text: t, ts: Date.now()});
+  push(ref(db, `rooms/${roomId}/messages`), { type: "text", sender: nickname, text: t, ts: Date.now() });
   inpMsg.value = "";
 }
 
-async function endChat(){
+async function endChat() {
   if (messageWatcher) { messageWatcher(); messageWatcher = null; }
   if (partnerWatcher) { partnerWatcher(); partnerWatcher = null; }
   if (searchingTimer) { clearInterval(searchingTimer); searchingTimer = null; }
@@ -316,17 +335,17 @@ async function endChat(){
   showScreen(screenLogin);
 }
 
-/* icebreakers */
-function startIcebreakers(){
-  let i = Math.floor(Math.random()*icebreakers.length);
+/* ---------- Icebreakers ---------- */
+function startIcebreakers() {
+  let i = Math.floor(Math.random() * icebreakers.length);
   icebreakerEl.textContent = icebreakers[i];
-  icebreakerTimer = setInterval(()=> {
-    i = (i+1) % icebreakers.length;
+  icebreakerTimer = setInterval(() => {
+    i = (i + 1) % icebreakers.length;
     icebreakerEl.textContent = icebreakers[i];
   }, 8500);
 }
-function stopIcebreakers(){ if (icebreakerTimer) { clearInterval(icebreakerTimer); icebreakerTimer = null; } }
+function stopIcebreakers() { if (icebreakerTimer) { clearInterval(icebreakerTimer); icebreakerTimer = null; } }
 
-/* init */
+/* ---------- Init ---------- */
 showScreen(screenLogin);
 updateAvatar("ME");
