@@ -1,149 +1,104 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Tagu-Taguan Chat</title>
 
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Google Font -->
+  <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;600&display=swap" rel="stylesheet">
+
   <!-- Font Awesome Icons -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-yH6n1vM8Wq0t6zG6RmGd0pN0XCP9yyPp8jE4d4z2U5utQ2Qh9B7JpPYTzB2ZyNXY3Yw6cBmc6AqM5vN49nnjVA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 
-  <style>
-    body {
-      background-color: #f5f5f5;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    }
-    .message-bubble {
-      padding: 10px 14px;
-      border-radius: 20px;
-      max-width: 75%;
-      position: relative;
-      word-break: break-word;
-    }
-    .message-sent {
-      background-color: #ff8b3d;
-      color: white;
-      margin-left: auto;
-    }
-    .message-received {
-      background-color: #e0e0e0;
-      color: black;
-      margin-right: auto;
-    }
-    #reactionPicker {
-      animation: fadeIn 0.2s ease-in-out;
-    }
-    @keyframes fadeIn {
-      from { opacity: 0; transform: scale(0.9); }
-      to { opacity: 1; transform: scale(1); }
-    }
-  </style>
+  <link rel="stylesheet" href="style.css">
 </head>
-<body class="flex flex-col h-screen">
+<body class="bg-gradient-to-b from-[#fff9f0] to-[#fff3df] min-h-screen font-quicksand text-slate-800">
 
-  <!-- Header -->
-  <header class="bg-white shadow p-4 flex justify-between items-center">
-    <div class="text-xl font-bold text-[#ff8b3d] flex items-center gap-2">
-      <i class="fa-solid fa-house"></i> Tagu-Taguan Chat
+  <main class="max-w-3xl mx-auto p-4">
+    <!-- Header -->
+    <header class="flex items-center justify-between mb-4">
+      <div class="flex items-center gap-3">
+        <div class="text-2xl">🏠</div>
+        <div>
+          <h1 class="text-xl sm:text-2xl font-semibold text-[#ff8b3d]">Tagu-Taguan Chat</h1>
+          <div class="text-xs text-slate-500">Tambay-style hide & seek 1-on-1 chat</div>
+        </div>
+      </div>
+      <div id="meAvatar" class="w-9 h-9 rounded-full bg-[#fde9d3] flex items-center justify-center text-sm font-semibold text-[#9b4b00]">ME</div>
+    </header>
+
+    <!-- LOGIN -->
+    <section id="screenLogin" class="bg-white/90 border border-amber-100 rounded-lg shadow p-4">
+      <p class="mb-3 text-sm text-slate-600">Enter a nickname (hidden for the first 5 minutes)</p>
+      <div class="flex gap-2">
+        <input id="inpName" class="flex-1 rounded-lg border border-amber-200 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#ffd6a8]" placeholder="e.g. KantoKid" />
+        <button id="btnJoin" class="rounded-lg bg-[#ff8b3d] text-white px-4 py-2 hover:bg-[#ff7a1e] transition">Start</button>
+      </div>
+    </section>
+
+    <!-- WAITING -->
+    <section id="screenWaiting" class="hidden bg-white/90 border border-amber-100 rounded-lg shadow p-4 mt-4">
+      <div class="flex items-center gap-4">
+        <div class="text-4xl animate-bounce">🛺</div>
+        <div>
+          <div class="font-semibold text-[#ff8b3d]">Nagtatago ang kalaban…</div>
+          <div id="searchStatus" class="text-sm text-slate-500 mt-1">Searching...</div>
+        </div>
+      </div>
+
+      <div class="mt-4 p-3 rounded-md bg-amber-50">
+        <div class="text-xs text-amber-800 uppercase mb-1">Icebreaker</div>
+        <div id="icebreaker" class="font-medium text-slate-800">Ano’ng paborito mong merienda?</div>
+      </div>
+
+      <div class="mt-4 flex justify-between items-center">
+        <div class="text-xs text-slate-500">Hintayin mo lang — may makaka-chat ka rin.</div>
+        <button id="btnCancel" class="text-sm text-[#ff8b3d] hover:underline">Cancel</button>
+      </div>
+    </section>
+
+    <!-- CHAT -->
+    <section id="screenChat" class="hidden bg-white/90 border border-amber-100 rounded-lg shadow mt-4 flex flex-col overflow-hidden">
+      <!-- Top -->
+      <div class="p-3 bg-gradient-to-r from-[#ff8b3d] to-[#ffd07a] text-white flex items-center justify-between">
+        <div>
+          <div class="text-xs uppercase opacity-90">Ka-chat</div>
+          <div id="lblPartner" class="font-semibold text-lg animate-pulse">??? (nagtatago…)</div>
+          <div id="lblReveal" class="text-xs opacity-80">Reveals in 5:00</div>
+        </div>
+        <div class="flex gap-2">
+          <button id="btnEnd" class="bg-white/20 hover:bg-white/30 rounded px-3 py-1 text-sm">End</button>
+          <button id="btnRematch" class="bg-white text-[#ff8b3d] px-3 py-1 rounded text-sm">Lipat Kanto</button>
+        </div>
+      </div>
+
+      <!-- Messages -->
+      <div id="chatMessages" class="flex-1 overflow-y-auto p-4 space-y-3 bg-[length:20px_20px]">
+        <!-- messages go here -->
+      </div>
+
+      <!-- Composer -->
+      <div class="p-3 flex gap-2 items-center border-t border-amber-100 bg-white">
+        <input id="inpMsg" class="flex-1 rounded-full border border-amber-200 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#ffd6a8]" placeholder="Type a message…" />
+        <button id="btnSend" class="rounded-full bg-[#ff8b3d] text-white px-4 py-2">📩</button>
+      </div>
+    </section>
+
+    <!-- Reactions Popup (Messenger style) -->
+    <div id="reactionPopup" class="hidden absolute bg-white shadow-lg rounded-full px-3 py-2 flex gap-3 border border-amber-100 z-50">
+      <button class="reactionBtn text-xl" data-reaction="❤️"><i class="fa-solid fa-heart text-red-500"></i></button>
+      <button class="reactionBtn text-xl" data-reaction="😂"><i class="fa-solid fa-face-laugh-squint text-yellow-500"></i></button>
+      <button class="reactionBtn text-xl" data-reaction="👍"><i class="fa-solid fa-thumbs-up text-blue-500"></i></button>
+      <button class="reactionBtn text-xl" data-reaction="🔥"><i class="fa-solid fa-fire text-orange-500"></i></button>
+      <button class="reactionBtn text-xl" data-reaction="😮"><i class="fa-solid fa-face-surprise text-yellow-400"></i></button>
     </div>
-    <button id="endChat" class="text-red-500 hover:text-red-700">
-      <i class="fa-solid fa-phone-slash text-lg"></i>
-    </button>
-  </header>
 
-  <!-- Chat container -->
-  <main id="chatContainer" class="flex-1 overflow-y-auto p-4 space-y-2">
-    <!-- Messages will appear here -->
   </main>
 
-  <!-- Message input -->
-  <footer class="bg-white p-4 flex gap-2 items-center">
-    <input id="messageInput" type="text" placeholder="Type a message..." 
-      class="flex-1 border border-gray-300 rounded-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#ff8b3d]">
-    <button id="btnSend" class="bg-[#ff8b3d] hover:bg-[#ff7a1e] text-white p-3 rounded-full">
-      <i class="fa-solid fa-paper-plane"></i>
-    </button>
-  </footer>
-
-  <!-- Reaction Picker -->
-  <div id="reactionPicker" class="hidden absolute bg-white shadow-lg rounded-full px-2 py-1 gap-2 flex z-50">
-    <span class="reactionOption cursor-pointer">❤️</span>
-    <span class="reactionOption cursor-pointer">😂</span>
-    <span class="reactionOption cursor-pointer">😮</span>
-    <span class="reactionOption cursor-pointer">👍</span>
-    <span class="reactionOption cursor-pointer">🔥</span>
-  </div>
-
-  <script>
-    const chatContainer = document.getElementById('chatContainer');
-    const messageInput = document.getElementById('messageInput');
-    const btnSend = document.getElementById('btnSend');
-    const reactionPicker = document.getElementById('reactionPicker');
-    let pressTimer, selectedMessageEl;
-
-    // Send message
-    btnSend.addEventListener('click', () => {
-      const text = messageInput.value.trim();
-      if (!text) return;
-      addMessage(text, 'sent');
-      messageInput.value = '';
-    });
-
-    // Add message to UI
-    function addMessage(text, type) {
-      const messageEl = document.createElement('div');
-      messageEl.className = `message-bubble message-${type}`;
-      messageEl.textContent = text;
-
-      // Add long-press detection
-      messageEl.addEventListener('mousedown', (e) => {
-        pressTimer = setTimeout(() => {
-          selectedMessageEl = messageEl;
-          showReactionPicker(e.pageX, e.pageY);
-        }, 500);
-      });
-      messageEl.addEventListener('mouseup', () => clearTimeout(pressTimer));
-      messageEl.addEventListener('mouseleave', () => clearTimeout(pressTimer));
-
-      chatContainer.appendChild(messageEl);
-      chatContainer.scrollTop = chatContainer.scrollHeight;
-    }
-
-    // Show reaction picker
-    function showReactionPicker(x, y) {
-      reactionPicker.style.left = `${x}px`;
-      reactionPicker.style.top = `${y - 40}px`;
-      reactionPicker.classList.remove('hidden');
-    }
-
-    // Handle reaction click
-    document.querySelectorAll('.reactionOption').forEach(opt => {
-      opt.addEventListener('click', () => {
-        const reaction = document.createElement('div');
-        reaction.className = 'text-sm mt-1';
-        reaction.textContent = opt.textContent;
-        selectedMessageEl.appendChild(reaction);
-        reactionPicker.classList.add('hidden');
-      });
-    });
-
-    // Close reaction picker when clicking outside
-    document.addEventListener('click', (e) => {
-      if (!reactionPicker.contains(e.target)) {
-        reactionPicker.classList.add('hidden');
-      }
-    });
-
-    // End chat button
-    document.getElementById('endChat').addEventListener('click', () => {
-      chatContainer.innerHTML = '';
-      messageInput.value = '';
-      alert('Chat ended. Returning to nickname page...');
-      // Here you would redirect to nickname page
-    });
-  </script>
-
+  <script type="module" src="app.js"></script>
 </body>
 </html>
