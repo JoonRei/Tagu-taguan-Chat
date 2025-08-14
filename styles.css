@@ -9,16 +9,20 @@
 .pulsate { animation: pulsate 1.2s ease-in-out infinite; }
 @keyframes pulsate { 0%{ opacity:.8; transform:scale(1)} 50%{ opacity:1; transform:scale(1.02)} 100%{ opacity:.8; transform:scale(1)} }
 
+/* style.css */
+
 /* General bubble styles */
 .msg-bubble {
   max-width: 70%;
   padding: 10px 14px;
   border-radius: 20px;
   word-wrap: break-word;
-  white-space: pre-wrap;
+  white-space: normal; /* allow normal wrapping */
   line-height: 1.4;
   font-size: 14px;
   position: relative;
+  display: inline-block;
+  word-break: break-word; /* fix breaking per letter */
 }
 
 /* Sent message (ME) */
@@ -33,7 +37,7 @@
 
 /* Received message (partner) */
 .msg-bubble.them {
-  background-color: #e5e5ea; /* gray */
+  background-color: #f0f0f0; /* soft gray */
   color: black;
   border-bottom-left-radius: 4px;
   border-bottom-right-radius: 20px;
@@ -41,19 +45,76 @@
   border-top-right-radius: 20px;
 }
 
-/* Reaction badge below message */
-.msg-bubble + div {
-  display: block;
-  position: absolute;
-  bottom: -10px;
-  left: 50%;
-  transform: translateX(-50%);
+/* Reaction badge */
+.reaction-badge {
+  display: inline-block;
+  margin-top: 4px;
   font-size: 16px;
   background-color: white;
   padding: 2px 6px;
   border-radius: 12px;
   box-shadow: 0 1px 3px rgba(0,0,0,0.2);
-  z-index: 10;
+}
+
+/* Reaction badge wrapper to push below bubble */
+.msg-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start; /* default for received */
+}
+
+.msg-wrapper.me {
+  align-items: flex-end; /* sent messages align right */
+}
+
+/* Prevent text highlight on long press */
+.msg-bubble {
+  user-select: none;
+}
+
+/* Pulsate effect for partner name before reveal */
+.pulsate {
+  animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+  0% { opacity: 0.6; }
+  50% { opacity: 1; }
+  100% { opacity: 0.6; }
+}
+
+/* Scrollable chat area */
+#chatMessages {
+  scrollbar-width: thin;
+  scrollbar-color: #ffd6a8 #fff3df;
+  display: flex;
+  flex-direction: column;
+}
+
+#chatMessages::-webkit-scrollbar {
+  width: 6px;
+}
+#chatMessages::-webkit-scrollbar-track {
+  background: #fff3df;
+}
+#chatMessages::-webkit-scrollbar-thumb {
+  background-color: #ffd6a8;
+  border-radius: 3px;
+}
+
+/* Input focus ring */
+#inpMsg:focus, #inpName:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px #ffd6a8;
+}
+
+/* Reaction popup */
+#reaction-popup button {
+  cursor: pointer;
+  background: none;
+  border: none;
+  outline: none;
+  font-size: 20px;
 }
 
 /* Prevent text highlight on long press */
@@ -115,4 +176,5 @@
 /* minimal scrollbar */
 #chatMessages::-webkit-scrollbar { width:9px; height:9px; }
 #chatMessages::-webkit-scrollbar-thumb { background:#ffd59f; border-radius:9px; }
+
 
