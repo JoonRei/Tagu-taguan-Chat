@@ -1,180 +1,59 @@
-/* small custom styles & animations - keep it minimal and tasteful */
-@keyframes move { 0%{ transform: translateX(-20px);} 100%{ transform: translateX(20px);} }
-.animate-\[move_2s_linear_infinite\] { animation: move 2s linear infinite; }
+body { margin: 0; }
 
-/* sticky note (icebreaker) */
-.sticky-note { background:#fffaf0; border:1px solid #ffe6b3; box-shadow:0 8px 20px rgba(0,0,0,.04); }
-
-/* gentle pulsate for hidden label */
-.pulsate { animation: pulsate 1.2s ease-in-out infinite; }
-@keyframes pulsate { 0%{ opacity:.8; transform:scale(1)} 50%{ opacity:1; transform:scale(1.02)} 100%{ opacity:.8; transform:scale(1)} }
-
-/* style.css */
-
-/* General bubble styles */
+/* Message bubble */
 .msg-bubble {
   max-width: 70%;
   padding: 10px 14px;
   border-radius: 20px;
-  word-wrap: break-word;
-  white-space: normal; /* allow normal wrapping */
   line-height: 1.4;
   font-size: 14px;
-  position: relative;
   display: inline-block;
-  word-break: break-word; /* fix breaking per letter */
+  word-break: break-word;
+  white-space: normal; /* fix per-letter line break */
+  overflow-wrap: break-word;
 }
 
-/* Sent message (ME) */
+/* Sent message */
 .msg-bubble.me {
   background-color: #ff8b3d; /* orange */
   color: white;
   border-bottom-right-radius: 4px;
-  border-bottom-left-radius: 20px;
-  border-top-left-radius: 20px;
-  border-top-right-radius: 20px;
 }
 
-/* Received message (partner) */
+/* Received message */
 .msg-bubble.them {
-  background-color: #f0f0f0; /* soft gray */
+  background-color: #e5e5ea; /* light gray / Messenger style */
   color: black;
   border-bottom-left-radius: 4px;
-  border-bottom-right-radius: 20px;
-  border-top-left-radius: 20px;
-  border-top-right-radius: 20px;
 }
+
+/* Wrapper for message + reactions */
+.msg-wrapper {
+  display: flex;
+  flex-direction: column;
+}
+
+.msg-wrapper.me { align-items: flex-end; }
+.msg-wrapper.them { align-items: flex-start; }
 
 /* Reaction badge */
 .reaction-badge {
-  display: inline-block;
   margin-top: 4px;
   font-size: 16px;
   background-color: white;
   padding: 2px 6px;
   border-radius: 12px;
   box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+  display: inline-block;
 }
 
-/* Reaction badge wrapper to push below bubble */
-.msg-wrapper {
+/* Scrollable messages */
+#chatMessages {
   display: flex;
   flex-direction: column;
-  align-items: flex-start; /* default for received */
+  overflow-y: auto;
+  padding: 12px;
 }
 
-.msg-wrapper.me {
-  align-items: flex-end; /* sent messages align right */
-}
-
-/* Prevent text highlight on long press */
-.msg-bubble {
-  user-select: none;
-}
-
-/* Pulsate effect for partner name before reveal */
-.pulsate {
-  animation: pulse 1s infinite;
-}
-
-@keyframes pulse {
-  0% { opacity: 0.6; }
-  50% { opacity: 1; }
-  100% { opacity: 0.6; }
-}
-
-/* Scrollable chat area */
-#chatMessages {
-  scrollbar-width: thin;
-  scrollbar-color: #ffd6a8 #fff3df;
-  display: flex;
-  flex-direction: column;
-}
-
-#chatMessages::-webkit-scrollbar {
-  width: 6px;
-}
-#chatMessages::-webkit-scrollbar-track {
-  background: #fff3df;
-}
-#chatMessages::-webkit-scrollbar-thumb {
-  background-color: #ffd6a8;
-  border-radius: 3px;
-}
-
-/* Input focus ring */
-#inpMsg:focus, #inpName:focus {
-  outline: none;
-  box-shadow: 0 0 0 2px #ffd6a8;
-}
-
-/* Reaction popup */
-#reaction-popup button {
-  cursor: pointer;
-  background: none;
-  border: none;
-  outline: none;
-  font-size: 20px;
-}
-
-/* Prevent text highlight on long press */
-.msg-bubble {
-  user-select: none;
-}
-
-/* Pulsate effect for partner name before reveal */
-.pulsate {
-  animation: pulse 1s infinite;
-}
-
-@keyframes pulse {
-  0% { opacity: 0.6; }
-  50% { opacity: 1; }
-  100% { opacity: 0.6; }
-}
-
-/* Scrollable chat area */
-#chatMessages {
-  scrollbar-width: thin;
-  scrollbar-color: #ffd6a8 #fff3df;
-}
-
-/* Scrollbar for Webkit */
-#chatMessages::-webkit-scrollbar {
-  width: 6px;
-}
-#chatMessages::-webkit-scrollbar-track {
-  background: #fff3df;
-}
-#chatMessages::-webkit-scrollbar-thumb {
-  background-color: #ffd6a8;
-  border-radius: 3px;
-}
-
-/* Input focus ring */
-#inpMsg:focus, #inpName:focus {
-  outline: none;
-  box-shadow: 0 0 0 2px #ffd6a8;
-}
-
-/* Reaction popup */
-#reaction-popup button {
-  cursor: pointer;
-  background: none;
-  border: none;
-  outline: none;
-}
-
-/* my / their colors */
-.me { background:#e6f6ff; color:#075985; align-self:flex-end; border-radius:14px 14px 6px 14px; }
-.them { background:#fff; color:#1f2937; border:1px solid #fbe7d0; align-self:flex-start; border-radius:14px 14px 14px 6px; }
-
-/* floaty reaction */
-.floaty { position:absolute; pointer-events:none; animation: floatUp 900ms ease-out forwards; font-size:24px; }
-@keyframes floatUp { 0%{ transform: translateY(0) scale(.95); opacity:0 } 10%{ opacity:1 } 100%{ transform: translateY(-70px) scale(1.15); opacity:0 } }
-
-/* minimal scrollbar */
-#chatMessages::-webkit-scrollbar { width:9px; height:9px; }
-#chatMessages::-webkit-scrollbar-thumb { background:#ffd59f; border-radius:9px; }
-
-
+/* Disable text selection on long press */
+.msg-bubble { user-select: none; }
