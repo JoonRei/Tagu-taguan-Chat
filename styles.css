@@ -1,4 +1,4 @@
-body { margin: 0; }
+body { margin:0; }
 
 /* Message bubble */
 .msg-bubble {
@@ -9,28 +9,29 @@ body { margin: 0; }
   font-size: 14px;
   display: inline-block;
   word-break: break-word;
-  white-space: normal; /* fix per-letter line break */
+  white-space: normal;
   overflow-wrap: break-word;
 }
 
 /* Sent message */
 .msg-bubble.me {
-  background-color: #ff8b3d; /* orange */
+  background-color: #ff8b3d;
   color: white;
   border-bottom-right-radius: 4px;
 }
 
 /* Received message */
 .msg-bubble.them {
-  background-color: #e5e5ea; /* light gray / Messenger style */
+  background-color: #e0e5ff;
   color: black;
   border-bottom-left-radius: 4px;
 }
 
-/* Wrapper for message + reactions */
+/* Message wrapper */
 .msg-wrapper {
   display: flex;
   flex-direction: column;
+  margin-bottom: 10px;
 }
 
 .msg-wrapper.me { align-items: flex-end; }
