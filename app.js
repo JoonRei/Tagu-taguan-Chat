@@ -86,15 +86,17 @@ function createMessageElement(msgId, text, senderIsMe, reaction = null){
   wrapper.className = senderIsMe ? "flex justify-end mb-2" : "flex justify-start mb-2";
 
   const container = document.createElement("div");
-  container.className = "relative";
+  container.className = "relative max-w-[75%]";
 
   const bubble = document.createElement("div");
   bubble.className = "msg-bubble " + (senderIsMe ? "me" : "them");
   bubble.innerText = text;
-  bubble.style.userSelect = "none"; // prevent text highlight
+  bubble.style.userSelect = "none"; 
+  bubble.style.wordBreak = "break-word";
+  bubble.style.whiteSpace = "pre-wrap";
 
   const badge = document.createElement("div");
-  badge.className = "bg-white rounded-full shadow px-1 text-lg absolute left-1/2 -translate-x-1/2 -bottom-5";
+  badge.className = "bg-white rounded-full shadow px-2 py-0.5 text-sm absolute left-1/2 -translate-x-1/2 -bottom-5";
   badge.textContent = reaction || "";
   badge.style.display = reaction ? "block" : "none";
 
@@ -104,7 +106,6 @@ function createMessageElement(msgId, text, senderIsMe, reaction = null){
   chatMessages.appendChild(wrapper);
   scrollToBottom();
 
-  // Long press for reactions
   let pressTimer;
   const startPress = (e) => {
     e.preventDefault();
@@ -119,7 +120,6 @@ function createMessageElement(msgId, text, senderIsMe, reaction = null){
   bubble.addEventListener("touchend", endPress);
 }
 
-/* Reaction popup overlay */
 function showReactionPopup(bubble, msgId, badgeEl){
   const existing = document.getElementById("reaction-popup");
   if(existing) existing.remove();
@@ -138,7 +138,6 @@ function showReactionPopup(bubble, msgId, badgeEl){
     btn.className = "text-xl hover:scale-125 transition-transform";
     btn.textContent = r;
     btn.onclick = async () => {
-      // update reaction in DB
       await update(ref(db, `rooms/${roomId}/messages/${msgId}`), { reaction: r });
       badgeEl.textContent = r;
       badgeEl.style.display = "block";
@@ -265,7 +264,7 @@ function startChat(id, partner){
 function sendMessage(){
   const t = (inpMsg.value||"").trim();
   if(!t||!roomId) return;
-  push(ref(db,`rooms/${roomId}/messages`),{ type:"text", sender:nickname, text:t, ts:Date.now()});
+  push(ref(db,`rooms/${roomId}/messages`),{ type:"text", sender:nickname, text:t, ts: Date.now()});
   inpMsg.value="";
 }
 
