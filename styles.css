@@ -1,0 +1,26 @@
+/* small custom styles & animations - keep it minimal and tasteful */
+@keyframes move { 0%{ transform: translateX(-20px);} 100%{ transform: translateX(20px);} }
+.animate-\[move_2s_linear_infinite\] { animation: move 2s linear infinite; }
+
+/* sticky note (icebreaker) */
+.sticky-note { background:#fffaf0; border:1px solid #ffe6b3; box-shadow:0 8px 20px rgba(0,0,0,.04); }
+
+/* gentle pulsate for hidden label */
+.pulsate { animation: pulsate 1.2s ease-in-out infinite; }
+@keyframes pulsate { 0%{ opacity:.8; transform:scale(1)} 50%{ opacity:1; transform:scale(1.02)} 100%{ opacity:.8; transform:scale(1)} }
+
+/* message bubbles */
+.msg-bubble { padding: .5rem .75rem; border-radius: 14px; display:inline-block; max-width:78%; box-shadow: 0 6px 14px rgba(0,0,0,.04); }
+.msg-meta { font-size: 11px; color: #6b7280; margin-top:4px; }
+
+/* my / their colors */
+.me { background:#e6f6ff; color:#075985; align-self:flex-end; border-radius:14px 14px 6px 14px; }
+.them { background:#fff; color:#1f2937; border:1px solid #fbe7d0; align-self:flex-start; border-radius:14px 14px 14px 6px; }
+
+/* floaty reaction */
+.floaty { position:absolute; pointer-events:none; animation: floatUp 900ms ease-out forwards; font-size:24px; }
+@keyframes floatUp { 0%{ transform: translateY(0) scale(.95); opacity:0 } 10%{ opacity:1 } 100%{ transform: translateY(-70px) scale(1.15); opacity:0 } }
+
+/* minimal scrollbar */
+#chatMessages::-webkit-scrollbar { width:9px; height:9px; }
+#chatMessages::-webkit-scrollbar-thumb { background:#ffd59f; border-radius:9px; }
